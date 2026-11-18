@@ -1,0 +1,2 @@
+# domains that must never be blocked, one per line
+# e.g. a CDN your bank uses that a list caught by mistake

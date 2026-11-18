@@ -1,0 +1,31 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+      - run: go vet ./...
+      - run: go test -race ./...
+      - run: test -z "$(gofmt -l .)"
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t dnsguard .
+      # smoke test: run the image for real and resolve something through it
+      - run: |
+          docker run -d --name dg --sysctl net.ipv4.ip_unprivileged_port_start=53 \
+            -p 5353:53/udp dnsguard -listen :53 -block /dev/null -upstream 1.1.1.1
+          sleep 2
+          docker logs dg
+          dig +short +time=3 @127.0.0.1 -p 5353 github.com A | grep -E '^[0-9.]+$'

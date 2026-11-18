@@ -1,0 +1,12 @@
+# small demo list - in real use point -block at a big public list, e.g.
+# https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts
+0.0.0.0 doubleclick.net
+0.0.0.0 googlesyndication.com
+0.0.0.0 google-analytics.com
+0.0.0.0 app-measurement.com
+0.0.0.0 graph.facebook.com
+||adnxs.com^
+||taboola.com^
+scorecardresearch.com
+# known bad
+malware-c2.example
