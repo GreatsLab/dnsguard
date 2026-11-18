@@ -1,1 +1,190 @@
-<!doctype html><title>dnsguard</title>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dnsguard</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Cpath d=%27M8 1l6 2.5v4C14 11.5 11.4 14.3 8 15 4.6 14.3 2 11.5 2 7.5v-4z%27 fill=%27%23121A21%27/%3E%3Cpath d=%27M5 8h6%27 stroke=%27%23D9480F%27 stroke-width=%272%27/%3E%3C/svg%3E">
+<style>
+:root {
+  --page: #F4F6F8; --card: #fff; --ink: #121A21; --ink2: #5A6772; --rule: #DCE2E7;
+  --fwd: #3A5BA0; --cache: #138A72; --block: #D9480F; --err: #8A1C1C;
+  --sans: "Schibsted Grotesk", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink); font: 15px/1.45 var(--sans); font-variant-numeric: tabular-nums; }
+header { display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap; padding: 18px 28px; background: var(--card); border-bottom: 1px solid var(--rule); }
+h1 { margin: 0; font-size: 24px; letter-spacing: -.02em; }
+.meta { color: var(--ink2); font-size: 14px; }
+.live { color: var(--cache); font-weight: 600; }
+.live::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: currentColor; margin-right: 6px; animation: pulse 2s infinite; }
+@keyframes pulse { 50% { opacity: .3; } }
+@media (prefers-reduced-motion: reduce) { .live::before { animation: none; } }
+.live.off { color: var(--err); }
+main { max-width: 1240px; margin: 0 auto; padding: 22px 28px 40px; display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr); gap: 22px; }
+section { background: var(--card); border: 1px solid var(--rule); border-radius: 8px; padding: 16px 18px; min-width: 0; }
+h2 { font-size: 16px; margin: 0 0 12px; }
+.headline { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px 36px; align-items: baseline; background: none; border: 0; padding: 0; }
+.headline p { margin: 0; font-size: 18px; max-width: 70ch; }
+.headline b { font-weight: 800; }
+.headline .blk { color: var(--block); }
+.chart { grid-column: 1 / -1; }
+#bars { width: 100%; height: 150px; display: block; }
+.keys { display: flex; gap: 18px; font-size: 13px; color: var(--ink2); margin-top: 6px; }
+.keys i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.stream { grid-row: span 3; }
+.tools { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.tools input { flex: 1; min-width: 160px; font: 14px var(--mono); padding: 7px 9px; border: 1px solid var(--rule); border-radius: 6px; }
+.tools select, button { font: 600 14px var(--sans); padding: 7px 12px; border-radius: 6px; border: 1px solid var(--rule); background: #fff; cursor: pointer; color: var(--ink); }
+button.primary { background: var(--ink); color: #fff; border-color: var(--ink); }
+#log { list-style: none; margin: 0; padding: 0; font-size: 13.5px; max-height: 640px; overflow-y: auto; }
+#log li { display: grid; grid-template-columns: 70px minmax(0, 1fr) 56px 64px; gap: 10px; padding: 5px 8px; border-left: 3px solid var(--fwd); border-bottom: 1px solid #EEF1F4; align-items: center; }
+#log li.blocked { border-left-color: var(--block); background: #FFF5F0; }
+#log li.cached { border-left-color: var(--cache); }
+#log li.error { border-left-color: var(--err); }
+#log .t { color: var(--ink2); font-family: var(--mono); font-size: 12px; }
+#log .n { font-family: var(--mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#log .n small { display: block; color: var(--ink2); font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; }
+#log .r { font-size: 12px; font-weight: 600; }
+#log li.blocked .r { color: var(--block); } #log li.cached .r { color: var(--cache); } #log li.forwarded .r { color: var(--fwd); }
+#log .ms { text-align: right; color: var(--ink2); font-family: var(--mono); font-size: 12px; }
+#log button { padding: 1px 6px; font-size: 11px; margin-left: 6px; }
+.top ol { margin: 0; padding: 0; list-style: none; font-size: 14px; }
+.top li { display: flex; justify-content: space-between; gap: 10px; padding: 4px 0; border-bottom: 1px solid #EEF1F4; }
+.top li span:first-child { font-family: var(--mono); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.top li span:last-child { color: var(--ink2); }
+.check { display: flex; gap: 8px; }
+.check input { flex: 1; font: 14px var(--mono); padding: 7px 9px; border: 1px solid var(--rule); border-radius: 6px; min-width: 0; }
+#checkres { margin: 8px 0 0; font-size: 14px; min-height: 1.4em; }
+.ups { font-size: 14px; margin: 0; padding: 0; list-style: none; }
+.ups li { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #EEF1F4; }
+.ups code { font-family: var(--mono); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; }
+:focus-visible { outline: 3px solid var(--fwd); outline-offset: 2px; }
+@media (max-width: 860px) { main { grid-template-columns: 1fr; padding: 16px; } .stream { grid-row: auto; } #log li { grid-template-columns: minmax(0, 1fr) 64px; } #log .t, #log .ms { display: none; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>dnsguard</h1>
+  <span id="state" class="live">live</span>
+  <span class="meta" id="meta"></span>
+</header>
+<main>
+  <section class="headline"><p id="headline">Connecting…</p></section>
+
+  <section class="chart">
+    <h2>Last hour, per minute</h2>
+    <svg id="bars" role="img" aria-label="Queries per minute"></svg>
+    <div class="keys"><span><i style="background:var(--fwd)"></i>forwarded</span><span><i style="background:var(--cache)"></i>from cache</span><span><i style="background:var(--block)"></i>blocked</span></div>
+  </section>
+
+  <section class="stream">
+    <h2>Queries</h2>
+    <div class="tools">
+      <input id="q" placeholder="filter by name or client IP" spellcheck="false" autocomplete="off">
+      <select id="result"><option value="">everything</option><option value="blocked">blocked</option><option value="forwarded">forwarded</option><option value="cached">cached</option><option value="error">errors</option></select>
+      <button id="pause" type="button">Pause</button>
+    </div>
+    <ol id="log"></ol>
+  </section>
+
+  <section>
+    <h2>Is it blocked?</h2>
+    <form class="check" id="check"><input id="cname" placeholder="ads.example.com" spellcheck="false" autocomplete="off"><button class="primary">Check</button></form>
+    <p id="checkres"></p>
+  </section>
+  <section class="top"><h2>Most blocked</h2><ol id="topblocked"></ol></section>
+  <section class="top"><h2>Most asked for</h2><ol id="topdomains"></ol></section>
+  <section class="top"><h2>Busiest clients</h2><ol id="topclients"></ol></section>
+  <section><h2>Upstreams</h2><ul class="ups" id="ups"></ul></section>
+</main>
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const fmt = (n) => Number(n).toLocaleString("en-US");
+const token = new URLSearchParams(location.search).get("token") || "";
+const api = (p, opt = {}) => fetch(p + (p.includes("?") ? "&" : "?") + (token ? "token=" + encodeURIComponent(token) : ""), opt)
+  .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
+let paused = false;
+const ms = (ns) => { const v = ns / 1e6; return v < 1 ? `${(ns / 1e3).toFixed(0)} µs` : `${v.toFixed(v < 10 ? 1 : 0)} ms`; };
+const hhmmss = (t) => new Date(t).toLocaleTimeString("en-GB", { hour12: false });
+
+function bars(rows) {
+  const svg = $("#bars"), W = svg.clientWidth || 800, H = 150;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  const max = Math.max(1, ...rows.map(r => r.total));
+  const bw = W / rows.length;
+  const css = getComputedStyle(document.documentElement);
+  const col = { fwd: css.getPropertyValue("--fwd"), cache: css.getPropertyValue("--cache"), block: css.getPropertyValue("--block") };
+  let out = "";
+  rows.forEach((r, i) => {
+    const parts = [["block", r.blocked], ["cache", r.cached], ["fwd", r.total - r.blocked - r.cached]];
+    let y = H - 16;
+    for (const [k, v] of parts) {
+      if (v <= 0) continue;
+      const h = (v / max) * (H - 24);
+      out += `<rect x="${(i * bw + 1).toFixed(1)}" y="${(y - h).toFixed(1)}" width="${Math.max(1, bw - 2).toFixed(1)}" height="${h.toFixed(1)}" fill="${col[k]}"><title>${new Date(r.t * 1000).toLocaleTimeString()}: ${r.total} queries, ${r.blocked} blocked</title></rect>`;
+      y -= h;
+    }
+  });
+  out += `<text x="0" y="${H - 2}" font-size="11" fill="#5A6772">-60 min</text><text x="${W}" y="${H - 2}" font-size="11" fill="#5A6772" text-anchor="end">now</text>`;
+  svg.innerHTML = out;
+}
+
+// not "top": that name is window.top in a classic script and throws on redeclare
+function renderTop(el, rows) {
+  $(el).innerHTML = rows.length ? rows.map(r => `<li><span title="${esc(r.key)}">${esc(r.key)}</span><span>${fmt(r.count)}</span></li>`).join("") : `<li><span>nothing yet</span><span></span></li>`;
+}
+
+async function refresh() {
+  try {
+    const d = await api("/api/summary");
+    const s = d.summary;
+    $("#state").className = "live"; $("#state").textContent = "live";
+    $("#meta").textContent = `up ${s.uptime} · ${fmt(d.blocklist_size)} domains on the blocklist · ${fmt(d.cache_size)} answers cached`;
+    const hitRate = d.cache_hits + d.cache_misses ? (d.cache_hits / (d.cache_hits + d.cache_misses) * 100).toFixed(0) : 0;
+    $("#headline").innerHTML = s.total
+      ? `<b>${fmt(s.total)}</b> queries so far, <b class="blk">${fmt(s.blocked)} blocked (${s.blocked_pct.toFixed(1)}%)</b>. ${hitRate}% answered from cache` +
+        (s.avg_upstream_ms ? `; the rest took <b>${s.avg_upstream_ms.toFixed(0)} ms</b> on average upstream.` : ".")
+      : "No queries yet. Point a device's DNS at this machine's IP and they'll show up here.";
+    bars(s.per_minute);
+    renderTop("#topblocked", s.top_blocked); renderTop("#topdomains", s.top_domains); renderTop("#topclients", s.top_clients);
+    $("#ups").innerHTML = (d.upstreams || []).map(u => `<li><code title="${esc(u.name)}">${esc(u.name)}</code><span>${u.rtt_ms ? u.rtt_ms.toFixed(0) + " ms" : "–"}${u.recent_failures ? ` · <b style="color:var(--err)">${u.recent_failures} fails</b>` : ""}</span></li>`).join("");
+  } catch (e) {
+    $("#state").className = "live off";
+    $("#state").textContent = e.message === "401" ? "token needed: add ?token=… to the URL" : "can't reach dnsguard";
+  }
+  if (!paused) {
+    const q = encodeURIComponent($("#q").value.trim()), r = $("#result").value;
+    try {
+      const rows = await api(`/api/queries?n=200&q=${q}&result=${r}`);
+      $("#log").innerHTML = rows.map(e => `<li class="${e.result}">
+        <span class="t">${hhmmss(e.time)}</span>
+        <span class="n" title="${esc(e.name)}">${esc(e.name)} <small>${esc(e.type)} from ${esc(e.client)}${e.rule && e.rule !== e.name ? ` · rule ${esc(e.rule)}` : ""}${e.answers ? ` → ${esc(e.answers.slice(0, 2).join(", "))}` : ""}${e.error ? ` · ${esc(e.error)}` : ""}</small></span>
+        <span class="r">${e.result}${e.result === "blocked" ? `<button data-allow="${esc(e.rule)}" title="allow ${esc(e.rule)} until restart">allow</button>` : ""}</span>
+        <span class="ms">${ms(e.took_ns)}</span></li>`).join("") || `<li><span class="n">no matching queries</span></li>`;
+    } catch {}
+  }
+}
+
+$("#pause").addEventListener("click", () => { paused = !paused; $("#pause").textContent = paused ? "Resume" : "Pause"; });
+$("#q").addEventListener("input", () => refresh());
+$("#result").addEventListener("change", () => refresh());
+$("#log").addEventListener("click", async (e) => {
+  const b = e.target.closest("button[data-allow]");
+  if (!b) return;
+  await api("/api/allow", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: "name=" + encodeURIComponent(b.dataset.allow) });
+  b.textContent = "allowed"; b.disabled = true;
+});
+$("#check").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const n = $("#cname").value.trim();
+  if (!n) return;
+  const r = await api("/api/check?name=" + encodeURIComponent(n));
+  $("#checkres").innerHTML = r.blocked ? `<b style="color:var(--block)">Blocked</b>, by the rule <code>${esc(r.rule)}</code>.` : `<b style="color:var(--cache)">Not blocked.</b>`;
+});
+refresh();
+setInterval(refresh, 2000);
+</script>
+</body>
+</html>

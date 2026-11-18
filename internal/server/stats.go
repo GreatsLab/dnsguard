@@ -19,7 +19,7 @@ type Entry struct {
 	Rcode     int           `json:"rcode"`
 	Answers   []string      `json:"answers,omitempty"`
 	Error     string        `json:"error,omitempty"`
-	Took      time.Duration `json:"took_us"`
+	Took      time.Duration `json:"took_ns"` // time.Duration marshals as nanoseconds
 }
 
 // Stats keeps a ring of recent queries plus counters per minute for the
