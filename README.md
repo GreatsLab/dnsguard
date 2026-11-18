@@ -42,7 +42,7 @@ Dashboard at http://localhost:8053. Then set your router's DHCP to hand out this
 docker compose up -d
 ```
 
-[`docker-compose.yml`](docker-compose.yml) runs it as an unprivileged user from a `scratch` image (just the binary and CA certs, about 8 MB), with the dashboard bound to localhost.
+[`docker-compose.yml`](docker-compose.yml) runs it as an unprivileged user from a `scratch` image (just the binary and CA certs, under 7 MB), with the dashboard bound to localhost.
 
 ### systemd
 
